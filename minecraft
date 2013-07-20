@@ -29,7 +29,6 @@ SCRIPTDIR=$(dirname "$(readlink -e "$0")")
 BACKUPSCRIPTCOMPATIBLE=YES
 WORLDEDITCOMPATIBLE=YES
 LOGFILEAPPEND="logfile_"
-LOGFILEAPPEND="logfile_"
 
 if [ "$SERVERDIR" == "" ]
 then
@@ -90,10 +89,8 @@ mc_loadconfig() {
 	fi
 	
 	SCREEN="$PRESCREEN$1"
-	WORLDSTORAGE="$SERVERDIR$1/worlds"
 	MCPATH="$SERVERDIR$1"
-	WHOLEBACKUP="$BACKUPPATH$1/server"
-	WORLDBACKUP="$BACKUPPATH$1/worlds"
+	WORLDSTORAGE="$SERVERDIR/$1/worlds"
 }
 
 mc_checkconfig() {
@@ -512,7 +509,7 @@ mc_world_backup() {
 		fi
 	for INDEX in ${!WORLDNAME[@]}
 	do
-		echo "Backing up minecraft ${WORLDNAME[$INDEX]}"
+		echo "Backing up minecraft ${WORLDNAME[$INDEX]}..."
 		case "$BACKUPFORMAT" in
 			tar)
 				if [ "$WORLDEDITCOMPATIBLE" ]
@@ -533,8 +530,10 @@ mc_world_backup() {
 				# Don't store the complete path
 				then
 					as_user "cd $MCPATH && tar -hcjf $path ${WORLDNAME[$INDEX]}"
+					echo "${WORLDNAME[$INDEX]} backed up to $path"
 				else
 					as_user "tar -hcjf $path $MCPATH/${WORLDNAME[$INDEX]}"
+					echo "${WORLDNAME[$INDEX]} backed up to $path"
 				fi
 				;;
 			zip)
@@ -552,8 +551,10 @@ mc_world_backup() {
 				if [ "$WORLDEDITCOMPATIBLE" ]
 				then
 					as_user "cd $MCPATH && zip -rq $path ${WORLDNAME[$INDEX]}"
+					echo "${WORLDNAME[$INDEX]} backed up to $path"
 				else
 					as_user "zip -rq $path $MCPATH/${WORLDNAME[$INDEX]}"
+					echo "${WORLDNAME[$INDEX]} backed up to $path"
 				fi
 				;;
 			*)
@@ -882,32 +883,7 @@ case "$1" in
 			then
 				mc_loadconfig $file
 				
-				# Moves and Gzips the logfile
-				if [ ! -d $LOGPATH ]; then
-					as_user "mkdir -p $LOGPATH"
-				fi
-				
-				path=`datepath $LOGPATH/server_ .log.gz .log`
-				as_user "cp $MCPATH/server.log $path && gzip $path"
-				# only if previous command was successful
-				if [ $? -eq 0 ]; then
-					# turnacate the existing log without restarting server
-					as_user "cp /dev/null $MCPATH/server.log"
-					as_user "echo \"Previous logs rolled to $path\" > $MCPATH/server.log "
-				else    
-					echo "Failed to rotate logs to $LOGPATH/server_$path.log.gz"
-				fi
-				;;
-			fi
-		done
-		;;
-	log-roll)
-		files=`ls $SERVERDIR`
-
-		for file in $files; do
-			if [ -f "$SERVERDIR$file/config" ]
-			then
-				mc_loadconfig $file
+				echo "Rolling logs for the server $file..."
 				
 				# Moves and Gzips the logfile
 				if [ ! -d $LOGPATH ]; then
@@ -916,15 +892,15 @@ case "$1" in
 				
 				path=`datepath $LOGPATH/server_ .log.gz .log`
 				as_user "cp $MCPATH/server.log $path && gzip $path"
-				# only if previous command was successful
+				
 				if [ $? -eq 0 ]; then
 					# turnacate the existing log without restarting server
 					as_user "cp /dev/null $MCPATH/server.log"
 					as_user "echo \"Previous logs rolled to $path\" > $MCPATH/server.log "
+					echo "Rotate logs to $path"
 				else    
-					echo "Failed to rotate logs to $LOGPATH/server_$path.log.gz"
+					echo "Failed to rotate logs to $path.log.gz"
 				fi
-				;;
 			fi
 		done
 		;;
@@ -1109,6 +1085,9 @@ case "$1" in
 		echo -e "   stop \t\t Stops all servers"
 		echo -e "   restart \t\t Restarts all servers"
 		echo -e "   say \t\t Says something to the ingame chat on all servers"
+		echo -e "   backup \t\t Backups the worlds defined in the script"
+		echo -e "   log-roll \t\t Moves and gzips the logfile"
+		echo -e "   to-disk \t\t Copies the worlds from the ramdisk to worldstorage"
 		;;
 	*)
 		if [ "$1" == "" ]
