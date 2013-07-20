@@ -29,7 +29,7 @@ Installing screen & rsync
 
 On Red Hat-based distributions:
 
-  	yum install screen
+  		yum install screen
 		yum install rsync
 	
 On Debian based systems such as Ubuntu:
@@ -79,7 +79,9 @@ Enabling MCInitializer
 		54 0,11 * * * /etc/init.d/minecraft say 'Server restart in 5 minutes!'
 		58 0,11 * * * /etc/init.d/minecraft say 'Server restart in 1 minute!'
 		59 0,11 * * * /etc/init.d/minecraft restart
-		*/1 * * * * /etc/init.d/minecraft command 'save-all'
+		02 05  *   *   *   /etc/init.d/minecraft backup
+		55 04  *   *   *   /etc/init.d/minecraft log-roll
+		*/30   *   *   *   *   /etc/init.d/minecraft to-disk
 	
 Commands
 ===============
