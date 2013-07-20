@@ -1265,20 +1265,33 @@ case "$1" in
 							fi
 							;;
 						log-roll)
-							# Moves and Gzips the logfile
-							if [ ! -d $LOGPATH ]; then
-								as_user "mkdir -p $LOGPATH"
-							fi
-							path=`datepath $LOGPATH/server_ .log.gz .log`
-							as_user "cp $MCPATH/server.log $path && gzip $path"
-							# only if previous command was successful
-							if [ $? -eq 0 ]; then
-								# turnacate the existing log without restarting server
-								as_user "cp /dev/null $MCPATH/server.log"
-								as_user "echo \"Previous logs rolled to $path\" > $MCPATH/server.log "
-							else    
-								echo "Failed to rotate logs to $LOGPATH/server_$path.log.gz"
-							fi
+							files=`ls $SERVERDIR`
+
+							for file in $files; do
+								if [ -f "$SERVERDIR$file/config" ]
+								then
+									mc_loadconfig $file
+									
+									echo "Rolling logs for the server $file..."
+									
+									# Moves and Gzips the logfile
+									if [ ! -d $LOGPATH ]; then
+										as_user "mkdir -p $LOGPATH"
+									fi
+									
+									path=`datepath $LOGPATH/server_ .log.gz .log`
+									as_user "cp $MCPATH/server.log $path && gzip $path"
+									
+									if [ $? -eq 0 ]; then
+										# turnacate the existing log without restarting server
+										as_user "cp /dev/null $MCPATH/server.log"
+										as_user "echo \"Previous logs rolled to $path\" > $MCPATH/server.log "
+										echo "Rotate logs to $path"
+									else    
+										echo "Failed to rotate logs to $path.log.gz"
+									fi
+								fi
+							done
 							;;
 						last)
 							# Greps for recently logged in users
