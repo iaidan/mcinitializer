@@ -33,7 +33,17 @@ FORMAT='$1'
 
 # backup storage location
 # Example path: /home/${USERNAME}/backups/
-BACKUPPATH="/home/${USERNAME}/backups/"
+BACKUPPATH="/home/${USERNAME}/backups"
+
+#Location for whole server backups
+#$BACKUPPATH is the path set above
+#$1 is the server name
+WHOLEBACKUP="$BACKUPPATH/$1/server"
+
+#Location for world backups
+#$BACKUPPATH is the path set above
+#$1 is the server name
+WORLDBACKUP="$BACKUPPATH/$1/worlds"
 
 # Format for world backup (tar or zip)
 BACKUPFORMAT="tar" 
@@ -50,7 +60,8 @@ COMPRESS_BACKUP=YES
 # ===============================
 
 # Old log storage location
-LOGPATH="${MCPATH}/backup/logs"
+# $1 is the server name
+LOGPATH="/home/${USERNAME}/backups/$1/logs"
 
 # Whether or not to gzip logs (must be commented out for no - DO NOT CHANGE TO NO)
 GZIPLOGS=YES
