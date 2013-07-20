@@ -1,12 +1,12 @@
 # Number of CPUs/cores to use
-CPU_COUNT=1
+CPU_COUNT=2
 
 # Initial memory
-INITMEM="128M"
+INITMEM="512M"
 
 # Maximum memory
 # Remember, the system and other minecraft servers may use ram
-MAXMEM="256M"
+MAXMEM="1024M"
 
 # Release channel of craftbukkit (stable, beta, unstable) (unstable = dev)
 CB_RELEASE="unstable"
