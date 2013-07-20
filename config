@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+# Settings file for mcinitializer
+# 
+# This file will override settings set in server configs
+#
+# Edit this file to your needs
+# Rename this file to config when done!
+
+# General Settings
+# ===============================
+
+# Vanilla server jar
+VANILLA="minecraft_server.jar"
+
+# Name of craftbukkit jar
+CRAFTBUKKIT="craftbukkit.jar"
+
+# The screen prefix for servers
+PRESCREEN=""
+
+# Linux user running the servers
+USERNAME="minecraft"
+
+# Path to where minecraft servers will be stored
+SERVERDIR="/home/${USERNAME}/servers/"
+
+# Whether to output commands for the plugin ConsoleLikeChat ($1 is the command to run)
+FORMAT='$1'
+
+# backup Settings
+# ===============================
+
+# backup storage location
+# Example path: /home/${USERNAME}/backups/
+BACKUPPATH="/home/${USERNAME}/backups/"
+
+# Format for world backup (tar or zip)
+BACKUPFORMAT="tar" 
+
+# Normally backups will be put in a subfolder to $backupPATH with todays date
+# and the backups themselves will have a timestamp.
+
+# backup compression
+# this will compress backups to the bzip2 filetype
+# compression is highly reccomended to save diskspace.
+COMPRESS_BACKUP=YES
+
+# Log roll settings
+# ===============================
+
+# Old log storage location
+LOGPATH="${MCPATH}/backup/logs"
+
+# Whether or not to gzip logs (must be commented out for no - DO NOT CHANGE TO NO)
+GZIPLOGS=YES
