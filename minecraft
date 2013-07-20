@@ -856,6 +856,24 @@ case "$1" in
 			fi
 		done
 		;;
+	say)
+		# Says something to the ingame chat on all servers
+		files=`ls $SERVERDIR`
+
+		for file in $files; do
+			if [ -f "$SERVERDIR$file/config" ]
+			then
+				mc_loadconfig $file
+				
+				if is_running; then
+					echo "Attempting to send message to the server $file..."
+					mc_say "$2"
+				else
+					echo "Server $file not running."
+				fi
+			fi
+		done
+		;;
 	create)
 		if [ "$2" == "" ]
 		then
@@ -999,6 +1017,7 @@ case "$1" in
 		echo -e "   start \t\t Starts all servers"
 		echo -e "   stop \t\t Stops all servers"
 		echo -e "   restart \t\t Restarts all servers"
+		echo -e "   say \t\t Says something to the ingame chat on all servers"
 		;;
 	*)
 		if [ "$1" == "" ]
