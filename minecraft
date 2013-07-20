@@ -874,6 +874,97 @@ case "$1" in
 			fi
 		done
 		;;
+	log-roll)
+		files=`ls $SERVERDIR`
+
+		for file in $files; do
+			if [ -f "$SERVERDIR$file/config" ]
+			then
+				mc_loadconfig $file
+				
+				# Moves and Gzips the logfile
+				if [ ! -d $LOGPATH ]; then
+					as_user "mkdir -p $LOGPATH"
+				fi
+				
+				path=`datepath $LOGPATH/server_ .log.gz .log`
+				as_user "cp $MCPATH/server.log $path && gzip $path"
+				# only if previous command was successful
+				if [ $? -eq 0 ]; then
+					# turnacate the existing log without restarting server
+					as_user "cp /dev/null $MCPATH/server.log"
+					as_user "echo \"Previous logs rolled to $path\" > $MCPATH/server.log "
+				else    
+					echo "Failed to rotate logs to $LOGPATH/server_$path.log.gz"
+				fi
+				;;
+			fi
+		done
+		;;
+	log-roll)
+		files=`ls $SERVERDIR`
+
+		for file in $files; do
+			if [ -f "$SERVERDIR$file/config" ]
+			then
+				mc_loadconfig $file
+				
+				# Moves and Gzips the logfile
+				if [ ! -d $LOGPATH ]; then
+					as_user "mkdir -p $LOGPATH"
+				fi
+				
+				path=`datepath $LOGPATH/server_ .log.gz .log`
+				as_user "cp $MCPATH/server.log $path && gzip $path"
+				# only if previous command was successful
+				if [ $? -eq 0 ]; then
+					# turnacate the existing log without restarting server
+					as_user "cp /dev/null $MCPATH/server.log"
+					as_user "echo \"Previous logs rolled to $path\" > $MCPATH/server.log "
+				else    
+					echo "Failed to rotate logs to $LOGPATH/server_$path.log.gz"
+				fi
+				;;
+			fi
+		done
+		;;
+	backup)
+		files=`ls $SERVERDIR`
+
+		for file in $files; do
+			if [ -f "$SERVERDIR$file/config" ]
+			then
+				mc_loadconfig $file
+				
+				# Backups world
+				if is_running; then
+					mc_say "Backing up world."
+					mc_saveoff
+					to_disk
+					mc_world_backup
+					mc_saveon
+					mc_say "Backup complete."
+				else
+					mc_world_backup
+				fi
+			fi
+		done
+		;;
+	to-disk)
+		files=`ls $SERVERDIR`
+
+		for file in $files; do
+			if [ -f "$SERVERDIR$file/config" ]
+			then
+				mc_loadconfig $file
+				
+				# Writes from the ramdisk to disk, in case the server crashes. 
+				mc_saveoff
+				to_disk
+				mc_saveon
+			fi
+		done
+		;;
 	create)
 		if [ "$2" == "" ]
 		then
