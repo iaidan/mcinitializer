@@ -20,7 +20,7 @@
 # Configuration file loader
 if [ -L $0 ]
 then
-  source `readlink -e $0 | sed "s:[^/]*$:config:"`
+	source `readlink -e $0 | sed "s:[^/]*$:config:"`
 else
 	source `echo $0 | sed "s:[^/]*$:config:"`
 fi
@@ -60,7 +60,7 @@ mc_createconfig() {
 
 mc_loadconfig() {
 	# Loads chosen server config
-	if [ -L "$SERVERDIR/$1" ]
+	if [ -L "$SERVERDIR$1" ]
 	then
 		source `readlink -e "$SERVERDIR$1/config"`
 	else
@@ -772,6 +772,90 @@ check_permissions() {
 trap force_exit SIGINT
 
 case "$1" in
+	start)
+		# Starts the servers
+		files=`ls $SERVERDIR`
+
+		for file in $files; do
+			if [ -f "$SERVERDIR$file/config" ]
+			then
+				mc_loadconfig $file
+				
+				if is_running; then
+					echo "The server $file already running."
+				else
+					echo "Attempting to start the server $file..."
+					check_links
+					to_ram
+					mc_start
+				fi
+			fi
+		done
+		;;
+	stop)
+		# Stops the servers
+		files=`ls $SERVERDIR`
+
+		for file in $files; do
+			if [ -f "$SERVERDIR$file/config" ]
+			then
+				mc_loadconfig $file
+				
+				if is_running; then
+					echo "Attempting to close the server $file..."
+					pidfile=${MCPATH}/${SCREEN}.pid
+						
+					mc_say "SERVER SHUTTING DOWN FOR MAINTENANCE!"
+					mc_command "save-all"
+					mc_stop
+					
+					pid=$(head -1 $pidfile)
+					kill $pid
+					
+					to_disk
+				else
+					echo "The server $file is not a running server."
+				fi
+			fi
+		done
+		;;
+	restart)
+		# Restarts the servers
+		files=`ls $SERVERDIR`
+
+		for file in $files; do
+			if [ -f "$SERVERDIR$file/config" ]
+			then
+				mc_loadconfig $file
+				
+				if is_running; then
+					echo "Attempting to restart the server $file..."
+					if is_running; then
+						pidfile=${MCPATH}/${SCREEN}.pid
+						
+						mc_say "The server will be restarting in 10 seconds!"
+						mc_command "save-all"
+						mc_stop
+						
+						pid=$(head -1 $pidfile)
+						kill $pid
+						
+						to_disk
+					else
+						echo "The server $file is not running, starting it..."
+					fi
+					
+					sleep 5
+					
+					check_links
+					to_ram
+					mc_start
+				else
+					echo "The server $file not running."
+				fi
+			fi
+		done
+		;;
 	create)
 		if [ "$2" == "" ]
 		then
@@ -912,6 +996,9 @@ case "$1" in
 		echo -e "   copy \t\t Makes an exact copy off a minecraft server"
 		echo -e "   reset \t\t Resets a minecraft server back to basics"
 		echo -e "   check \t\t Checks the configuration is correct in a server"
+		echo -e "   start \t\t Starts all servers"
+		echo -e "   stop \t\t Stops all servers"
+		echo -e "   restart \t\t Restarts all servers"
 		;;
 	*)
 		if [ "$1" == "" ]
