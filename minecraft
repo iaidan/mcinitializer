@@ -745,17 +745,13 @@ whitelist(){
 }
 
 force_exit() {	# Kill the server running (messily) in an emergency
-	#echo ""
-	#echo "SIGINIT CALLED - FORCE EXITING!"
-	#pidfile=${MCPATH}/${SCREEN}.pid
-	#rm $pidfile
-	#echo "KILLING SERVER PROCESSES!!!"
+	echo "KILLING SERVER PROCESSES!!!"
 		
-			pidfile=${MCPATH}/${SCREEN}.pid
-			rm $pidfile
-			
-			pid=$(head -1 $pidfile)
-			kill $pid
+	pidfile=${MCPATH}/${SCREEN}.pid
+	rm $pidfile
+	
+	pid=$(head -1 $pidfile)
+	kill -INT `cat $pidfile`
 	exit 1
 }
 
