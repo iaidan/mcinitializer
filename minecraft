@@ -748,10 +748,9 @@ force_exit() {	# Kill the server running (messily) in an emergency
 	echo "KILLING SERVER PROCESSES!!!"
 		
 	pidfile=${MCPATH}/${SCREEN}.pid
-	rm $pidfile
 	
-	pid=$(head -1 $pidfile)
 	kill -INT `cat $pidfile`
+	rm $pidfile
 	exit 1
 }
 
