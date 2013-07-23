@@ -1330,7 +1330,9 @@ case "$1" in
 							;;
 						screen)
 							if is_running; then
-								screen -r $SCREEN
+								pidfile=${MCPATH}/${SCREEN}.pid
+								pid=$(head -1 $pidfile)
+								screen -x $pid
 							else
 							echo "Server is not running. Do you want to start it?"
 							echo "Please put \"Yes\", or \"No\": "
@@ -1340,7 +1342,9 @@ case "$1" in
 									check_links
 									to_ram
 									mc_start
-									screen -r $SCREEN
+									pidfile=${MCPATH}/${SCREEN}.pid
+									pid=$(head -1 $pidfile)
+									screen -x $pid
 									;;
 								[Nn]|[Nn][Oo])
 									clear
