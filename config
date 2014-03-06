@@ -16,14 +16,21 @@ VANILLA="minecraft_server.jar"
 # Name of craftbukkit jar
 CRAFTBUKKIT="craftbukkit.jar"
 
+# Name of spigot jar
+SPIGOT="spigot.jar"
+
+# Name of bungeecord jar
+BUNGEECORD="BungeeCord.jar"
+
 # The screen prefix for servers
-PRESCREEN=""
+PRESCREEN="."
+
 
 # Linux user running the servers
 USERNAME="minecraft"
 
 # Path to where minecraft servers will be stored
-SERVERDIR="/home/${USERNAME}/servers/"
+SERVERDIR="/home/${USERNAME}/servers"
 
 #Allows setting off a server configuration name
 #Server configurations are located in the minecraft server root folders

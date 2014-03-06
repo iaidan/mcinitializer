@@ -11,6 +11,16 @@ MAXMEM="1024M"
 # Release channel of craftbukkit (stable, beta, unstable) (unstable = dev)
 CB_RELEASE="unstable"
 
+# Release channel of spigot (stable, successful, unstable) (unstable = dev)
+SPIGOT_RELEASE="successful"
+
+# Release channel of bungeecord (stable, successful, unstable) (unstable = dev)
+BUNGEECORD_RELEASE="successful"
+
+#Minecraft server service to use ($VANILLA, $CRAFTBUKKIT)
+#You can also specify your own, e.g. SERVICE='YOURJAR.jar'
+SERVICE=$SPIGOT
+
 #Minecraft server service to use ($VANILLA, $CRAFTBUKKIT)
 #You can also specify your own, e.g. SERVICE='YOURJAR.jar'
 SERVICE=$VANILLA

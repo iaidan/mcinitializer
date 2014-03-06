@@ -6,12 +6,12 @@ Features
 --------
 
  * Create, Delete, Rename, Copy Minecraft Servers
- * Allows creation off servers with different ram allocations, cpu coress and jar files.
+ * Allows creation off servers with different ram allocations, cpu cores and jar files.
  * Backups off worlds and complete servers into a different location to the servers.
- * Server updating for vanilla and craftbukkit servers
+ * Server updating for vanilla, craftbukkit, spigot and bungeecord servers
  * Exclude files and directories from full backup by adding them to "exclude.list"
  * WorldEdit compatible backups
- * Loading off worlds into system RAM for faster access (redcing lag)
+ * Loading off worlds into system RAM for faster access (reducing lag)
  * Allows sending off commands to servers via command line
  * Uses screens for console access (info below)
 
@@ -80,7 +80,6 @@ Enabling MCInitializer
 		58 0,11 * * * /etc/init.d/minecraft say 'Server restart in 1 minute!'
 		59 0,11 * * * /etc/init.d/minecraft restart
 		02 05  *   *   *   /etc/init.d/minecraft backup
-		55 04  *   *   *   /etc/init.d/minecraft log-roll
 		*/30   *   *   *   *   /etc/init.d/minecraft to-disk
 	
 Commands

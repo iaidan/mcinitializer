@@ -53,17 +53,17 @@ mc_createconfig() {
 		exit 1
 	fi
 	
-	as_user "cp $SCRIPTDIR/default_server_config $SERVERDIR$1/$CONFIGNAME"
-	chmod 755 $SERVERDIR$1/$CONFIGNAME
+	as_user "cp $SCRIPTDIR/default_server_config $SERVERDIR/$1/$CONFIGNAME"
+	chmod 755 $SERVERDIR/$1/$CONFIGNAME
 }
 
 mc_loadconfig() {
 	# Loads chosen server config
-	if [ -L "$SERVERDIR$1" ]
+	if [ -L "$SERVERDIR/$1" ]
 	then
-		source `readlink -e "$SERVERDIR$1/$CONFIGNAME"`
+		source `readlink -e "$SERVERDIR/$1/$CONFIGNAME"`
 	else
-		source `echo "$SERVERDIR$1/$CONFIGNAME"`
+		source `echo "$SERVERDIR/$1/$CONFIGNAME"`
 	fi
 
 	if [ "$INVOCATION" == "" ]
@@ -89,12 +89,12 @@ mc_loadconfig() {
 	fi
 	
 	SCREEN="$PRESCREEN$1"
-	MCPATH="$SERVERDIR$1"
+	MCPATH="$SERVERDIR/$1"
 	WORLDSTORAGE="$SERVERDIR/$1/worlds"
 }
 
 mc_checkconfig() {
-	if [ -f "$SERVERDIR$1/$CONFIGNAME" ]
+	if [ -f "$SERVERDIR/$1/$CONFIGNAME" ]
 	then
 		return 1
 	else
@@ -160,36 +160,35 @@ mc_reset() {
 	find "$MCPATH/" -type f -delete
 	sleep 2
 	
-	as_user "echo '' > $SERVERDIR$1/$VANILLA"
-	as_user "echo '' > $SERVERDIR$1/$CRAFTBUKKIT"
-	echo "Server jars reset"
-	
 	mc_createconfig $1
-	echo "Server configuration reset"
+	mc_loadconfig $1
 	
-	echo "Downloading $VANILLA and $CRAFTBUKKIT..."
+	as_user "echo '' > $SERVERDIR/$1/$SERVICE"
+	
+	echo "$SERVICE reset"
+	echo "Server configuration reset"
+	echo "Downloading  $SERVICE..."
 	sleep 1
 	
-	mc_loadconfig $1
-	mc_update $1
+	mc_update $SERVICE
 	
 	echo "Server $1 reset!"
 }
 
 mc_rename() {
 	echo "Renaming the server $1 to the new name $2..."
-	mv $SERVERDIR$1 $SERVERDIR$2
+	mv $SERVERDIR/$1 $SERVERDIR/$2
 	echo "Done."
 }
 
 mc_copy() {
 	if [ -d $SERVERDIR ]
 	then
-		if [ -d $SERVERDIR$1 ]
+		if [ -d $SERVERDIR/$1 ]
 		then
 			echo "Server $1 exists... Checking for server $2..."
 			
-			if [ -d $SERVERDIR$2 ]
+			if [ -d $SERVERDIR/$2 ]
 			then
 				echo "Server $2 exists, checking for configuration file..."
 				
@@ -229,7 +228,7 @@ mc_copy() {
 	echo "Continuing with copy..."
 	
 	echo "Attempting to copy server..."
-	as_user "cp -a $SERVERDIR$1/. $SERVERDIR$2/"
+	as_user "cp -a $SERVERDIR/$1/. $SERVERDIR/$2/"
 	
 	echo "Done."
 }
@@ -237,7 +236,7 @@ mc_copy() {
 mc_create() {
 	if [ -d $SERVERDIR ]
 	then
-		if [ -d $SERVERDIR$1 ]
+		if [ -d $SERVERDIR/$1 ]
 		then
 			echo "Server $1 exists, checking for configuration file..."
 			
@@ -246,7 +245,7 @@ mc_create() {
 				echo "Configuration file found for the server $1"
 				exit 1
 			else
-				echo "An error with the function mc_checkconfig occured."
+				echo "An error with the function mc_checkconfig occurred."
 				exit 1
 			fi
 			
@@ -258,22 +257,22 @@ mc_create() {
 	fi
 	
 	echo "Attempting to create server..."
-	as_user "mkdir -p $SERVERDIR$1"
-	as_user "mkdir -p $SERVERDIR$1/worlds"
-	
-	as_user "echo '' > $SERVERDIR$1/$VANILLA"
-	as_user "echo '' > $SERVERDIR$1/$CRAFTBUKKIT"
+	as_user "mkdir -p $SERVERDIR/$1"
+	as_user "mkdir -p $SERVERDIR/$1/worlds"
 	
 	echo "Server directories created"
 	
 	mc_createconfig $1
-	echo "Server configuration created"
+	mc_loadconfig $1
 	
-	echo "Downloading $VANILLA and $CRAFTBUKKIT..."
+	as_user "echo '' > $SERVERDIR/$1/$SERVICE"
+	
+	echo "$SERVICE reset"
+	echo "Server configuration reset"
+	echo "Downloading $SERVICE..."
 	sleep 1
 	
-	mc_loadconfig $1
-	mc_update $1
+	mc_update $SERVICE
 	
 	echo "Server $1 created!"
 }
@@ -316,6 +315,7 @@ is_running(){
 		fi
 	fi
 }
+
 datepath() {
 	# datepath path filending-to-check returned-filending
 
@@ -399,7 +399,12 @@ mc_say() {
 	if is_running
 	then
 		echo "Said: $1"
-		mc_command "say $1"
+		
+		if [ $SERVICE = $BUNGEECORD ]; then
+			mc_command "alert $1"
+		else
+			mc_command "say $1"
+		fi
 	else
 		echo "$SERVICE was not running. Not able to say anything."
 	fi
@@ -411,10 +416,20 @@ mc_stop() {
 	# Stops the server
 	#
 	echo "Saving worlds..."
-	mc_command save-all
+	
+	if [ "$SERVICE" != "$BUNGEECORD" ]; then
+		mc_command save-all
+	fi
+	
 	sleep 10
 	echo "Stopping server..."
-	mc_command "stop The server will be back up shortly!"
+	
+	if [$SERVICE = $BUNGEECORD]; then
+		mc_command "end The proxy is restarting"
+	else
+		mc_command "stop The server will be back up shortly!"
+	fi
+	
 	sleep 0.5
 	#
 	# Waiting for the server to shut down
@@ -498,14 +513,16 @@ mc_world_backup() {
 	#
 
 	get_worlds
-	today="`date +%F`"
+	today="`date +%H%M%S%Y%m%d`"
+	
 	as_user "mkdir -p $WORLDBACKUP"
 	# Check if the backupt script compatibility is enabled
 		if [ "$BACKUPSCRIPTCOMPATIBLE" ]
 		then
 			# If it is enabled, then delete the old backups to prevent errors
 			echo "Detected that backup script compatibility is enabled, deleting old backups that are not necessary."
-			as_user "rm -r $WORLDBACKUP/*"
+			#as_user "rm -r $WORLDBACKUP/*"
+			find $BACKUPPATH/ -mtime +7 -type f -delete
 		fi
 	for INDEX in ${!WORLDNAME[@]}
 	do
@@ -623,31 +640,15 @@ to_disk() {
 	done
 }
 
-check_update_vanilla() {
+get_vanilla_release() {
 	MC_SERVER_URL=`wget -q -O - http://minecraft.net/download | grep minecraft_server.jar\ | cut -d \" -f 6`
-
-	echo "Checking for update for minecraft_server.jar (Vanilla)"
-	as_user "cd $MCPATH && wget -q -O $MCPATH/minecraft_server.jar.update $MC_SERVER_URL"
-
-	if [ -r "$MCPATH/minecraft_server.jar.update" ]
-	then
-		if `diff $MCPATH/$VANILLA $MCPATH/minecraft_server.jar.update >/dev/null`
-		then
-			echo "You are already running the latest version of minecraft_server.jar."
-			return 1
-		else
-			echo "Update of $VANILLA is needed."
-			return 0
-		fi
-	else
-		echo "Something went wrong. Couldn't download minecraft_server.jar"
-	fi	
+	echo $MC_SERVER_URL
 }
 
 get_cb_release_channel() {
 	CB_URL="http://dl.bukkit.org/latest-"
 
-	case $CB_RELEASE in
+	case $1 in
 		unstable|UNSTABLE|Unstable|dev|development)
 			echo $CB_URL"dev/craftbukkit.jar"
 		;;
@@ -660,23 +661,77 @@ get_cb_release_channel() {
 	esac
 }
 
-check_update_craftbukkit() {
-	echo "Checking for update for craftbukkit.jar"
-	echo "You are on release channel \"$CB_RELEASE\""
+get_bungeecord_release() {
+	SPIGOT_URL="http://ci.md-5.net/job/BungeeCord/"
 
-	as_user "cd $MCPATH && wget -q -O $MCPATH/craftbukkit.jar.update $(get_cb_release_channel)"
-	if [ -r "$MCPATH/craftbukkit.jar.update" ]
+	case $1 in
+		stable|STABLE|stable|dev|development)
+			echo $SPIGOT_URL"lastStableBuild/artifact/bootstrap/target/BungeeCord.jar"
+		;;
+		unstable|UNSTABLE|UNstable)
+			echo $SPIGOT_URL"lastUnstableBuild/artifact/bootstrap/target/BungeeCord.jar"
+		;;
+		*)
+			echo $SPIGOT_URL"lastSuccessfulBuild/artifact/bootstrap/target/BungeeCord.jar"
+		;;
+	esac
+}
+
+get_spigot_release() {
+	SPIGOT_URL="http://ci.md-5.net/view/Spigot/job/Spigot/"
+
+	case $1 in
+		stable|STABLE|dev|development)
+			echo $SPIGOT_URL"lastStableBuild/artifact/Spigot-Server/target/spigot.jar"
+		;;
+		unstable|UNSTABLE|UNstable)
+			echo $SPIGOT_URL"lastUnstableBuild/artifact/Spigot-Server/target/spigot.jar"
+		;;
+		*)
+			echo $SPIGOT_URL"lastSuccessfulBuild/artifact/Spigot-Server/target/spigot.jar"
+		;;
+	esac
+}
+
+check_update() {
+	echo "Checking for update for $1"
+	
+	if ! [ -z "$2" ]; then
+		echo "You are on release channel \"$2\""
+		$release = $2
+	fi
+	
+	case $1 in
+		$CRAFTBUKKIT)
+			as_user "cd $MCPATH && wget -q -O $MCPATH/$1.update $(get_cb_release $release)"
+		;;
+		$BUNGEECORD)
+			as_user "cd $MCPATH && wget -q -O $MCPATH/$1.update $(get_bungeecord_release $release)"
+		;;
+		$SPIGOT)
+			as_user "cd $MCPATH && wget -q -O $MCPATH/$1.update $(get_spigot_release $release)"
+		;;
+		$VANILLA)
+			as_user "cd $MCPATH && wget -q -O $MCPATH/$1.update $(get_vanilla_release)"
+		;;
+		*)
+			echo "Custom jars cannot be checked"
+			return 0
+		;;
+	esac
+	
+	if [ -r "$MCPATH/$1.update" ]
 	then
-		if `diff $MCPATH/$CRAFTBUKKIT $MCPATH/craftbukkit.jar.update >/dev/null`
+		if `diff $MCPATH/$1 $MCPATH/$1.update >/dev/null`
 		then
-			echo "You are already running the latest version of craftbukkit.jar."
+			echo "You are already running the latest version of $1."
 			return 1
 		else
-			echo "Update of $CRAFTBUKKIT is needed."
+			echo "Update of $1 is needed."
 			return 0
 		fi
 	else
-		echo "Something went wrong. Couldn't download craftbukkit.jar"
+		echo "Something went wrong. Couldn't download $1"
 	fi
 }
 
@@ -685,33 +740,72 @@ mc_update() {
 	then
 		echo "$SERVICE is running! Will not start update."
 	else
-		if check_update_vanilla
-		then
-			if [ -r "$MCPATH/minecraft_server.jar.update" ]
-			then
-				as_user "mv $MCPATH/minecraft_server.jar.update $MCPATH/$VANILLA"
-				echo "Thats it. Update of $VANILLA done."
-			else
-				echo "Something went wrong. Couldn't replace your original $VANILLA with minecraft_server.jar.update"
-			fi
-		else
-			echo "Not updating $MB_JAR. It's not necessary"
-			as_user "rm $MCPATH/minecraft_server.jar.update"
-		fi
-
-		if check_update_craftbukkit
-		then
-			if [ -r "$MCPATH/craftbukkit.jar.update" ]
-			then
-				as_user "mv $MCPATH/craftbukkit.jar.update $MCPATH/$CRAFTBUKKIT"
-				echo "Thats it. Update of $CRAFTBUKKIT done."
-			else
-				echo "Something went wrong. Couldn't replace your original $CRAFTBUKKIT with craftbukkit.jar.update"
-			fi
-		else
-			echo "Not updating $CRAFTBUKKIT. It's not necessary"
-			as_user "rm $MCPATH/craftbukkit.jar.update"
-		fi
+		case $1 in
+			$CRAFTBUKKIT)
+				if check_update $CRAFTBUKKIT
+				then
+					if [ -r "$MCPATH/$CRAFTBUKKIT.update" ]
+					then
+						as_user "mv $MCPATH/$CRAFTBUKKIT.update $MCPATH/$CRAFTBUKKIT"
+						echo "That's it. Update of $CRAFTBUKKIT done."
+					else
+						echo "Something went wrong. Couldn't replace your original $CRAFTBUKKIT with $CRAFTBUKKIT.update"
+					fi
+				else
+					echo "Not updating $CRAFTBUKKIT. It's not necessary"
+					as_user "rm $MCPATH/$CRAFTBUKKIT.update"
+				fi
+			;;
+			$SPIGOT)
+				if check_update $SPIGOT
+				then
+					if [ -r "$MCPATH/$SPIGOT.update" ]
+					then
+						as_user "mv $MCPATH/$SPIGOT.update $MCPATH/$SPIGOT"
+						echo "That's it. Update of $SPIGOT done."
+					else
+						echo "Something went wrong. Couldn't replace your original $SPIGOT with $SPIGOT.update"
+					fi
+				else
+					echo "Not updating $SPIGOT. It's not necessary"
+					as_user "rm $MCPATH/$SPIGOT.update"
+				fi
+			;;
+			$BUNGEECORD)
+				if check_update $BUNGEECORD
+				then
+					if [ -r "$MCPATH/$BUNGEECORD.update" ]
+					then
+						as_user "mv $MCPATH/$BUNGEECORD.update $MCPATH/$BUNGEECORD"
+						echo "That's it. Update of $BUNGEECORD done."
+					else
+						echo "Something went wrong. Couldn't replace your original $BUNGEECORD with $BUNGEECORD.update"
+					fi
+				else
+					echo "Not updating $BUNGEECORD. It's not necessary"
+					as_user "rm $MCPATH/$BUNGEECORD.update"
+				fi
+			;;
+			$VANILLA)
+				if check_update $VANILLA
+				then
+					if [ -r "$MCPATH/$VANILLA.update" ]
+					then
+						as_user "mv $MCPATH/$VANILLA.update $MCPATH/$VANILLA"
+						echo "That's it. Update of $VANILLA done."
+					else
+						echo "Something went wrong. Couldn't replace your original $VANILLA with $VANILLA.update"
+					fi
+				else
+					echo "Not updating $MB_JAR. It's not necessary"
+					as_user "rm $MCPATH/$CRAFTBUKKIT.update"
+				fi
+			;;
+			*)
+				echo "Custom jars cannot be checked"
+				return 0
+			;;
+		esac
 	fi
 }
 
@@ -730,6 +824,7 @@ change_ramdisk_state() {
 		touch $WORLDSTORAGE/$1/ramdisk
 		echo "Added ramdisk flag to \"$1\""
 	fi
+	
 	echo "Changes will only take effect after server is restarted."	
 }
 
@@ -746,7 +841,6 @@ whitelist(){
 
 force_exit() {	# Kill the server running (messily) in an emergency
 	echo "KILLING SERVER PROCESSES!!!"
-		
 	pidfile=${MCPATH}/${SCREEN}.pid
 	
 	kill -INT `cat $pidfile`
@@ -773,7 +867,7 @@ case "$1" in
 		files=`ls $SERVERDIR`
 
 		for file in $files; do
-			if [ -f "$SERVERDIR$file/$CONFIGNAME" ]
+			if [ -f "$SERVERDIR/$file/$CONFIGNAME" ]
 			then
 				mc_loadconfig $file
 				
@@ -793,19 +887,19 @@ case "$1" in
 		files=`ls $SERVERDIR`
 
 		for file in $files; do
-			if [ -f "$SERVERDIR$file/$CONFIGNAME" ]
+			if [ -f "$SERVERDIR/$file/$CONFIGNAME" ]
 			then
 				mc_loadconfig $file
 				
 				if is_running; then
 					echo "Attempting to close the server $file..."
 					pidfile=${MCPATH}/${SCREEN}.pid
+					pid=$(head -1 $pidfile)
 						
 					mc_say "SERVER SHUTTING DOWN FOR MAINTENANCE!"
 					mc_command "save-all"
 					mc_stop
 					
-					pid=$(head -1 $pidfile)
 					kill $pid
 					
 					to_disk
@@ -818,9 +912,9 @@ case "$1" in
 	restart)
 		# Restarts the servers
 		files=`ls $SERVERDIR`
-
+		
 		for file in $files; do
-			if [ -f "$SERVERDIR$file/$CONFIGNAME" ]
+			if [ -f "$SERVERDIR/$file/$CONFIGNAME" ]
 			then
 				mc_loadconfig $file
 				
@@ -828,12 +922,18 @@ case "$1" in
 					echo "Attempting to restart the server $file..."
 					if is_running; then
 						pidfile=${MCPATH}/${SCREEN}.pid
+						pid=$(head -1 $pidfile)
 						
-						mc_say "The server will be restarting in 10 seconds!"
-						mc_command "save-all"
+						if [$SERVICE = $BUNGEECORD]; then
+							mc_command "alert The proxy will be restarting in 10 seconds!"
+						else
+							mc_say "The server will be restarting in 10 seconds!"
+							
+							mc_command "save-all"
+						fi
+						
 						mc_stop
 						
-						pid=$(head -1 $pidfile)
 						kill $pid
 						
 						to_disk
@@ -852,12 +952,35 @@ case "$1" in
 			fi
 		done
 		;;
+	update)
+		# Update all servers
+		files=`ls $SERVERDIR`
+
+		for file in $files; do
+			if [ -f "$SERVERDIR/$file/$CONFIGNAME" ]
+			then
+				mc_loadconfig $file
+				echo "Attempting to update to the server $file..."
+				
+				if is_running; then
+					mc_say "SERVER UPDATE IN 10 SECONDS."
+					mc_stop
+					to_disk
+					mc_update $SERVICE
+					check_links
+					mc_start
+				else
+					mc_update $SERVICE
+				fi
+			fi
+		done
+		;;
 	say)
 		# Says something to the ingame chat on all servers
 		files=`ls $SERVERDIR`
 
 		for file in $files; do
-			if [ -f "$SERVERDIR$file/$CONFIGNAME" ]
+			if [ -f "$SERVERDIR/$file/$CONFIGNAME" ]
 			then
 				mc_loadconfig $file
 				
@@ -870,31 +993,20 @@ case "$1" in
 			fi
 		done
 		;;
-	log-roll)
+	command)
+		# sends a command to each server
 		files=`ls $SERVERDIR`
 
 		for file in $files; do
-			if [ -f "$SERVERDIR$file/$CONFIGNAME" ]
+			if [ -f "$SERVERDIR/$file/$CONFIGNAME" ]
 			then
 				mc_loadconfig $file
 				
-				echo "Rolling logs for the server $file..."
-				
-				# Moves and Gzips the logfile
-				if [ ! -d $LOGPATH ]; then
-					as_user "mkdir -p $LOGPATH"
-				fi
-				
-				path=`datepath $LOGPATH/server_ .log.gz .log`
-				as_user "cp $MCPATH/server.log $path && gzip $path"
-				
-				if [ $? -eq 0 ]; then
-					# turnacate the existing log without restarting server
-					as_user "cp /dev/null $MCPATH/server.log"
-					as_user "echo \"Previous logs rolled to $path\" > $MCPATH/server.log "
-					echo "Rotate logs to $path"
-				else    
-					echo "Failed to rotate logs to $path.log.gz"
+				if is_running; then
+					echo "Attempting to send command to the server $file..."
+					mc_command "$2"
+				else
+					echo "Server $file not running."
 				fi
 			fi
 		done
@@ -903,7 +1015,7 @@ case "$1" in
 		files=`ls $SERVERDIR`
 
 		for file in $files; do
-			if [ -f "$SERVERDIR$file/$CONFIGNAME" ]
+			if [ -f "$SERVERDIR/$file/$CONFIGNAME" ]
 			then
 				mc_loadconfig $file
 				
@@ -925,7 +1037,7 @@ case "$1" in
 		files=`ls $SERVERDIR`
 
 		for file in $files; do
-			if [ -f "$SERVERDIR$file/$CONFIGNAME" ]
+			if [ -f "$SERVERDIR/$file/$CONFIGNAME" ]
 			then
 				mc_loadconfig $file
 				
@@ -1003,9 +1115,9 @@ case "$1" in
 		then
 			echo "No server name specified."
 		else
-			if [ -d $SERVERDIR$2 ]
+			if [ -d $SERVERDIR/$2 ]
 			then
-				if [ -f "$SERVERDIR$2/config" ]
+				if [ -f "$SERVERDIR/$2/config" ]
 				then
 					echo "Configuration for $2 exists!"
 				else
@@ -1038,7 +1150,7 @@ case "$1" in
 			then
 				echo "Please specify the new name."
 			else
-				if [ -d $SERVERDIR$3 ]
+				if [ -d $SERVERDIR/$3 ]
 				then
 					echo "There is a server called $3, cannot copy $2."
 				else
@@ -1081,7 +1193,6 @@ case "$1" in
 		echo -e "   restart \t\t Restarts all servers"
 		echo -e "   say \t\t Says something to the ingame chat on all servers"
 		echo -e "   backup \t\t Backups the worlds defined in the script"
-		echo -e "   log-roll \t\t Moves and gzips the logfile"
 		echo -e "   to-disk \t\t Copies the worlds from the ramdisk to worldstorage"
 		;;
 	*)
@@ -1090,7 +1201,7 @@ case "$1" in
 			echo "No such command, see $0 help"
 			exit 1
 		else
-			if [ -d $SERVERDIR$1 ]
+			if [ -d $SERVERDIR/$1 ]
 			then
 				if [ "mc_checkconfig $1" == 0 ]
 				then
@@ -1124,9 +1235,13 @@ case "$1" in
 						restart)
 							# Restarts the server
 							if is_running; then
-								mc_say "The server will be restarting in 30 seconds!"
-								sleep 20
-								mc_command "save-all"
+								if [$SERVICE = $BUNGEECORD]; then
+									mc_command "alert The proxy will be restarting in 10 seconds!"
+								else
+									mc_say "The server will be restarting in 10 seconds!"
+									mc_command "save-all"
+								fi
+								
 								mc_stop
 								to_disk
 							else
@@ -1163,10 +1278,7 @@ case "$1" in
 							fi
 							;;
 						check-update)
-							check_update_vanilla
-							check_update_craftbukkit
-							as_user "rm $MCPATH/minecraft_server.jar.update"
-							as_user "rm $MCPATH/craftbukkit.jar.update"
+							check_update $SERVICE
 							;;
 					backup)
 						# Backups world
@@ -1201,11 +1313,11 @@ case "$1" in
 								mc_say "SERVER UPDATE IN 10 SECONDS."
 								mc_stop
 								to_disk
-								mc_update
+								mc_update $SERVICE
 								check_links
 								mc_start
 							else
-								mc_update
+								mc_update $SERVICE
 							fi
 							;;
 						to-disk)
@@ -1258,35 +1370,6 @@ case "$1" in
 							else
 								echo "No running server."
 							fi
-							;;
-						log-roll)
-							files=`ls $SERVERDIR`
-
-							for file in $files; do
-								if [ -f "$SERVERDIR$file/$CONFIGNAME" ]
-								then
-									mc_loadconfig $file
-									
-									echo "Rolling logs for the server $file..."
-									
-									# Moves and Gzips the logfile
-									if [ ! -d $LOGPATH ]; then
-										as_user "mkdir -p $LOGPATH"
-									fi
-									
-									path=`datepath $LOGPATH/server_ .log.gz .log`
-									as_user "cp $MCPATH/server.log $path && gzip $path"
-									
-									if [ $? -eq 0 ]; then
-										# turnacate the existing log without restarting server
-										as_user "cp /dev/null $MCPATH/server.log"
-										as_user "echo \"Previous logs rolled to $path\" > $MCPATH/server.log "
-										echo "Rotate logs to $path"
-									else    
-										echo "Failed to rotate logs to $path.log.gz"
-									fi
-								fi
-							done
 							;;
 						last)
 							# Greps for recently logged in users
@@ -1397,7 +1480,6 @@ case "$1" in
 							echo -e "   whole-backup \t Backups the entire server folder"
 							echo -e "   check-update \t Checks for updates of $CRAFTBUKKIT and $VANILLA"
 							echo -e "   update \t\t Fetches the latest version of minecraft.jar server and Bukkit"
-							echo -e "   log-roll \t\t Moves and gzips the logfile"
 							echo -e "   to-disk \t\t Copies the worlds from the ramdisk to worldstorage"
 							echo -e "   save-off \t\t Flushes the world to disk and then disables saving"
 							echo -e "   save-on \t\t Re-enables saving if it was previously disabled by save-off"
