@@ -424,7 +424,7 @@ mc_stop() {
 	sleep 10
 	echo "Stopping server..."
 	
-	if [$SERVICE = $BUNGEECORD]; then
+	if [ "$SERVICE" = "$BUNGEECORD" ]; then
 		mc_command "end The proxy is restarting"
 	else
 		mc_command "stop The server will be back up shortly!"
@@ -924,7 +924,7 @@ case "$1" in
 						pidfile=${MCPATH}/${SCREEN}.pid
 						pid=$(head -1 $pidfile)
 						
-						if [$SERVICE = $BUNGEECORD]; then
+						if [ "$SERVICE" = "$BUNGEECORD" ]; then
 							mc_command "alert The proxy will be restarting in 10 seconds!"
 						else
 							mc_say "The server will be restarting in 10 seconds!"
@@ -1235,7 +1235,7 @@ case "$1" in
 						restart)
 							# Restarts the server
 							if is_running; then
-								if [$SERVICE = $BUNGEECORD]; then
+								if [ "$SERVICE" = "$BUNGEECORD" ]; then
 									mc_command "alert The proxy will be restarting in 10 seconds!"
 								else
 									mc_say "The server will be restarting in 10 seconds!"
