@@ -25,12 +25,13 @@ BUNGEECORD="BungeeCord.jar"
 # The screen prefix for servers
 PRESCREEN="."
 
-
 # Linux user running the servers
 USERNAME="minecraft"
 
+eval USER_HOME="$(printf "~%q" "$USERNAME")"
+
 # Path to where minecraft servers will be stored
-SERVERDIR="/home/${USERNAME}/servers"
+SERVERDIR="${USER_HOME}/servers"
 
 #Allows setting off a server configuration name
 #Server configurations are located in the minecraft server root folders
@@ -43,8 +44,8 @@ FORMAT='$1'
 # ===============================
 
 # backup storage location
-# Example path: /home/${USERNAME}/backups/
-BACKUPPATH="/home/${USERNAME}/backups"
+# Example path: /mcinitializer/backups/
+BACKUPPATH="${USER_HOME}/backups"
 
 #Location for whole server backups
 #$BACKUPPATH is the path set above
@@ -72,7 +73,7 @@ COMPRESS_BACKUP=YES
 
 # Old log storage location
 # $1 is the server name
-LOGPATH="/home/${USERNAME}/backups/$1/logs"
+LOGPATH="${USER_HOME}/backups/$1/logs"
 
 # Whether or not to gzip logs (must be commented out for no - DO NOT CHANGE TO NO)
 GZIPLOGS=YES

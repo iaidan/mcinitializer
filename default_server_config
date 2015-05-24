@@ -1,5 +1,9 @@
+#
+# Server name
+#
+
 # Number of CPUs/cores to use
-CPU_COUNT=2
+CPU_COUNT=4
 
 # Initial memory
 INITMEM="512M"
@@ -8,22 +12,12 @@ INITMEM="512M"
 # Remember, the system and other minecraft servers may use ram
 MAXMEM="1024M"
 
-# Release channel of craftbukkit (stable, beta, unstable) (unstable = dev)
-CB_RELEASE="unstable"
-
-# Release channel of spigot (stable, successful, unstable) (unstable = dev)
-SPIGOT_RELEASE="successful"
-
-# Release channel of bungeecord (stable, successful, unstable) (unstable = dev)
-BUNGEECORD_RELEASE="successful"
-
-#Minecraft server service to use ($VANILLA, $CRAFTBUKKIT)
-#You can also specify your own, e.g. SERVICE='YOURJAR.jar'
-SERVICE=$SPIGOT
-
 #Minecraft server service to use ($VANILLA, $CRAFTBUKKIT)
 #You can also specify your own, e.g. SERVICE='YOURJAR.jar'
 SERVICE=$VANILLA
+
+# Linux user running the server
+SUSERNAME="minecraft"
 
 # Whether to output commands for the plugin ConsoleLikeChat ($1 is the command to run)
 FORMAT='$1'
@@ -31,7 +25,9 @@ FORMAT='$1'
 #=================================
 #DONT EDIT BELOW THIS!
 #=================================
+
 INVOCATION="java -Xmx$MAXMEM -Xms$INITMEM -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:ParallelGCThreads=$CPU_COUNT -XX:+AggressiveOpts -jar $SERVICE nogui"
 
 # Mounted ramdisk path
-RAMDISK="/dev/shm"
+RAMDISK=""
+
